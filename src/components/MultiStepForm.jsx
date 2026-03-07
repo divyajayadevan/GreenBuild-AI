@@ -153,7 +153,7 @@ export function MultiStepForm({ onSubmit, onPreviewClimate, climatePreview, load
           disabled={loading}
           className="w-full rounded-full bg-white/90 px-10 py-6 text-[12px] font-black uppercase tracking-[0.3em] text-bg transition-all hover:bg-white hover:scale-[1.01] active:scale-[0.99] disabled:cursor-wait disabled:opacity-50 shadow-2xl"
         >
-          {loading ? "Synthesizing Architecture..." : "Analyze with Gemini 1.5 Pro"}
+          {loading ? "Synthesizing Architecture..." : "Analyze with Gemini 2.5 Flash"}
         </button>
       </div>
     </section>
