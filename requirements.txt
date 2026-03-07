@@ -4,3 +4,4 @@ httpx
 python-dotenv
 google-genai
 fpdf2
+python-multipart

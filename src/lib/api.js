@@ -17,6 +17,16 @@ async function jsonRequest(path, options = {}) {
   return response.json();
 }
 
+async function buildError(response) {
+  const detail = await response.text();
+  try {
+    const parsed = JSON.parse(detail);
+    return parsed.detail || detail || `Request failed: ${response.status}`;
+  } catch {
+    return detail || `Request failed: ${response.status}`;
+  }
+}
+
 export const api = {
   base: API_BASE,
   analyze: (payload) =>
@@ -28,5 +38,20 @@ export const api = {
   results: (slug) => jsonRequest(`/results/${slug}`),
   climate: (location) =>
     jsonRequest(`/climate?location=${encodeURIComponent(location)}`),
-};
+  materialsCatalog: () => jsonRequest("/admin/materials"),
+  async uploadMaterialsCatalog(file) {
+    const formData = new FormData();
+    formData.append("file", file);
 
+    const response = await fetch(`${API_BASE}/admin/materials/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(await buildError(response));
+    }
+
+    return response.json();
+  },
+};

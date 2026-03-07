@@ -28,6 +28,9 @@ class Settings(BaseModel):
     storage_file: Path = ROOT_DIR / "src" / "storage" / "db.json"
     report_dir: Path = ROOT_DIR / "src" / "storage" / "reports"
     gemini_model: str = "gemini-2.5-flash"
+    materials_seed_file: Path = ROOT_DIR / "data" / "materials_catalog" / "materials.csv"
+    materials_storage_dir: Path = ROOT_DIR / "src" / "storage" / "materials_catalog"
+    materials_active_file: Path = materials_storage_dir / "materials.csv"
 
 
 @lru_cache
