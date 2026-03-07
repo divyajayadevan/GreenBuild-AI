@@ -1,0 +1,41 @@
+component,material,region,carbon,cost,availability,sustainability,baseline
+Foundation,Conventional C30/37 RC slab,EU_generic,380,1.00,88,42,true
+Foundation,LC3 low-clinker concrete,EU_generic,260,1.08,70,76,false
+Foundation,Geopolymer concrete slab,EU_generic,210,1.16,54,82,false
+Foundation,Recycled aggregate concrete,EU_generic,295,1.04,74,68,false
+Structure,Conventional steel frame S355,EU_generic,2500,1.00,90,40,true
+Structure,Hybrid mass timber frame,EU_generic,750,1.18,61,86,false
+Structure,High-recycled steel frame,EU_generic,1700,1.07,76,73,false
+Structure,Low-cement precast frame,EU_generic,1450,1.12,67,71,false
+Walls,Standard CMU cavity wall,EU_generic,220,1.00,87,44,true
+Walls,Hemp-lime block wall,EU_generic,60,1.11,48,84,false
+Walls,AAC insulated block wall,EU_generic,110,1.05,72,72,false
+Walls,Recycled steel stud wall,EU_generic,145,1.03,78,66,false
+Roof,Dark bituminous membrane roof,EU_generic,95,1.00,89,35,true
+Roof,Cool roof membrane,EU_generic,80,1.04,82,74,false
+Roof,Recycled metal standing seam roof,EU_generic,68,1.13,64,79,false
+Roof,CLT roof with bio-based topping,EU_generic,72,1.16,52,81,false
+Insulation,Fiberglass batt insulation,EU_generic,12,1.00,92,48,true
+Insulation,Cellulose blown insulation,EU_generic,7,1.06,70,81,false
+Insulation,Wood fiber insulation,EU_generic,8,1.12,58,84,false
+Insulation,Mineral wool insulation,EU_generic,10,1.05,84,74,false
+Windows,Double-glazed aluminum frame,EU_generic,60,1.00,90,45,true
+Windows,Triple-glazed timber-aluminum composite,EU_generic,75,1.18,58,82,false
+Windows,Low-e fiberglass window,EU_generic,52,1.10,73,76,false
+Windows,Vacuum insulated glazing,EU_generic,48,1.24,45,85,false
+Doors,Standard hollow metal exterior door,EU_generic,85,1.00,91,43,true
+Doors,FSC timber insulated door set,EU_generic,60,1.10,63,78,false
+Doors,Recycled steel insulated door,EU_generic,70,1.05,81,69,false
+Doors,Thermally broken aluminum door,EU_generic,66,1.12,68,72,false
+HVAC,Conventional gas boiler with DX cooling,EU_generic,40,1.00,88,34,true
+HVAC,Air-source heat pump with DOAS+ERV,EU_generic,22,1.16,69,84,false
+HVAC,VRF heat pump system,EU_generic,25,1.12,78,79,false
+HVAC,Ground-source heat pump,EU_generic,18,1.28,42,88,false
+Flooring,Vinyl composition tile,EU_generic,18,1.00,90,39,true
+Flooring,Bamboo flooring,EU_generic,10,1.14,68,80,false
+Flooring,Polished low-carbon concrete,EU_generic,12,1.06,77,72,false
+Flooring,Recycled rubber flooring,EU_generic,11,1.09,71,74,false
+Interior Finishes,Standard gypsum board + solvent paint,EU_generic,14,1.00,92,41,true
+Interior Finishes,Recycled gypsum + low-VOC paint,EU_generic,9,1.05,83,79,false
+Interior Finishes,Bio-based acoustic panels,EU_generic,8,1.16,56,83,false
+Interior Finishes,Lime plaster finish system,EU_generic,7,1.12,61,81,false

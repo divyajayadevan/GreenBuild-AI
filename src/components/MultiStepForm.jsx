@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MaterialsAdminPanel } from "./MaterialsAdminPanel";
 
 const baseCertifications = [
   "LEED",
@@ -33,7 +34,17 @@ const soilOptions = [
   "Rock/Bedrock"
 ];
 
-export function MultiStepForm({ onSubmit, onPreviewClimate, climatePreview, loading }) {
+export function MultiStepForm({
+  onSubmit,
+  onPreviewClimate,
+  climatePreview,
+  loading,
+  catalog,
+  catalogError,
+  catalogLoading,
+  catalogUploadLoading,
+  onUploadCatalog,
+}) {
   const [form, setForm] = useState({
     project_name: "Harbor Edge Office",
     building_type: "Mixed-use commercial",
@@ -204,6 +215,16 @@ export function MultiStepForm({ onSubmit, onPreviewClimate, climatePreview, load
             />
           </Field>
         </div>
+      </div>
+
+      <div className="mt-16 border-t border-white/5 pt-10">
+        <MaterialsAdminPanel
+          catalog={catalog}
+          error={catalogError}
+          loading={catalogLoading}
+          onUpload={onUploadCatalog}
+          uploadLoading={catalogUploadLoading}
+        />
       </div>
 
       <div className="mt-16 pt-10 border-t border-white/5">

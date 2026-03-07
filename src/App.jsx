@@ -22,6 +22,34 @@ function LandingPage() {
   const navigate = useNavigate();
   const [climatePreview, setClimatePreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [catalog, setCatalog] = useState(null);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogUploadLoading, setCatalogUploadLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCatalog() {
+      setCatalogLoading(true);
+      try {
+        const data = await api.materialsCatalog();
+        if (!active) return;
+        setCatalog(data);
+        setCatalogError("");
+      } catch (error) {
+        if (!active) return;
+        setCatalogError(error.message || "Failed to load catalog metadata.");
+      } finally {
+        if (active) setCatalogLoading(false);
+      }
+    }
+
+    loadCatalog();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleClimatePreview(location) {
     try {
@@ -42,6 +70,21 @@ function LandingPage() {
       alert("Failed to start analysis. Please ensure the backend is running at " + api.base + "\n\nError: " + error.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCatalogUpload(file) {
+    setCatalogUploadLoading(true);
+    try {
+      const data = await api.uploadMaterialsCatalog(file);
+      setCatalog(data);
+      setCatalogError("");
+      return data;
+    } catch (error) {
+      setCatalogError(error.message || "Upload failed.");
+      throw error;
+    } finally {
+      setCatalogUploadLoading(false);
     }
   }
 
@@ -102,8 +145,13 @@ function LandingPage() {
             <p className="mt-4 text-white/40 text-lg">Configure your project specs below to begin the Gemini optimization workflow.</p>
           </div>
           <MultiStepForm
+            catalog={catalog}
+            catalogError={catalogError}
+            catalogLoading={catalogLoading}
+            catalogUploadLoading={catalogUploadLoading}
             climatePreview={climatePreview}
             loading={loading}
+            onUploadCatalog={handleCatalogUpload}
             onPreviewClimate={handleClimatePreview}
             onSubmit={handleSubmit}
           />

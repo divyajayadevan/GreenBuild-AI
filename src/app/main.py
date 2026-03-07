@@ -2,14 +2,16 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app.config import get_settings
 from app.models import AnalyzeRequest, ChatRequest
+from app.services.analysis import AnalysisService
 from app.services.climate import ClimateService
 from app.services.gemini import GeminiService, slugify
+from app.services.material_catalog import CatalogValidationError, MaterialCatalogService
 from app.services.report import ReportService
 from app.storage import JsonStorage
 
@@ -17,13 +19,19 @@ from app.storage import JsonStorage
 settings = get_settings()
 storage = JsonStorage(settings.storage_file)
 climate_service = ClimateService()
+material_catalog_service = MaterialCatalogService(
+    settings.materials_seed_file,
+    settings.materials_storage_dir,
+    settings.materials_active_file,
+)
+analysis_service = AnalysisService(material_catalog_service)
 gemini_service = GeminiService(settings.gemini_api_key, settings.gemini_model)
 report_service = ReportService(settings.report_dir)
 
 app = FastAPI(title=settings.app_name)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8001", "http://localhost:8001"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -53,7 +61,8 @@ def run_analysis_job(job_id: str) -> None:
     try:
         storage.update_job(job_id, status="processing", error=None)
         climate = climate_service.fetch_climate(job["request"]["location"])
-        analysis = gemini_service.generate_analysis(job["request"], climate)
+        ranked_analysis = analysis_service.build_ranked_analysis(job["request"], climate)
+        analysis = gemini_service.enrich_analysis(job["request"], climate, ranked_analysis)
         result = build_result(job, climate, analysis)
         storage.save_result(job["slug"], result)
         storage.update_job(job_id, status="completed", result_ready=True)
@@ -69,6 +78,22 @@ def root() -> dict:
 @app.get("/climate")
 def get_climate(location: str = Query(..., min_length=2)) -> dict:
     return climate_service.fetch_climate(location)
+
+
+@app.get("/admin/materials")
+def get_materials_catalog() -> dict:
+    return material_catalog_service.get_summary()
+
+
+@app.post("/admin/materials/upload")
+async def upload_materials_catalog(file: UploadFile = File(...)) -> dict:
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a CSV file.")
+    content = await file.read()
+    try:
+        return material_catalog_service.replace_catalog(content, file.filename)
+    except CatalogValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/analyze")

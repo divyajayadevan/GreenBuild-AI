@@ -18,8 +18,11 @@ class JsonStorage:
             self._write({"jobs": {}, "results": {}})
 
     def _read(self) -> dict[str, Any]:
-        with self.path.open("r", encoding="utf-8") as handle:
-            return json.load(handle)
+        try:
+            with self.path.open("r", encoding="utf-8") as handle:
+                return json.load(handle)
+        except FileNotFoundError:
+            return {"jobs": {}, "results": {}}
 
     def _write(self, data: dict[str, Any]) -> None:
         with self.path.open("w", encoding="utf-8") as handle:
