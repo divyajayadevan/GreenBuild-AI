@@ -59,7 +59,7 @@ function LandingPage() {
       <section className="grid gap-16 py-20 xl:grid-cols-[1.1fr,0.9fr] xl:items-center">
         <div className="animate-reveal">
           <div className="inline-flex rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.4em] text-accent">
-            Gemini 1.5 Pro + Climate Engine
+            Gemini 2.5 Flash + Climate Engine
           </div>
           <h1 className="mt-8 max-w-4xl font-heading text-7xl leading-[1.05] text-white md:text-9xl tracking-tighter uppercase">
             GreenBuild <span className="text-accent">AI</span>

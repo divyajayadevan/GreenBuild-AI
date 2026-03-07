@@ -1,13 +1,13 @@
 # GreenBuild AI
 
-GreenBuild AI is a full-stack sustainable construction workflow app built with React 18, Vite, Tailwind CSS, FastAPI, Gemini 1.5 Pro, Open-Meteo, `fpdf2`, and local JSON storage.
+GreenBuild AI is a full-stack sustainable construction workflow app built with React 18, Vite, Tailwind CSS, FastAPI, Gemini 2.5 Flash, Open-Meteo, `fpdf2`, and local JSON storage.
 
 ## Features
 
 - 5-step project intake form for building parameters
 - Async backend analysis jobs with polling
 - Open-Meteo climate enrichment
-- Gemini 1.5 Pro structured material recommendations across 10 building components
+- Gemini 2.5 Flash structured material recommendations across 10 building components
 - Cinematic dark dashboard with charts and component drill-down
 - PDF report download
 - Floating follow-up chat widget with streaming responses
