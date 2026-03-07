@@ -12,6 +12,28 @@ import {
   YAxis,
 } from "recharts";
 
+const MOCK_TEAM_COMMENTS = {
+  Foundation: [
+    { role: "Civil Engineer", name: "Sarah Chen", time: "2 hours ago", text: "The LC3 concrete option looks great for carbon, but we need to verify the curing time against the updated winter schedule. The geopolymer might be safer if we hit delays." },
+    { role: "Project Manager", name: "Marcus Johnson", time: "1 hour ago", text: "Agreed. I'll flag this risk. If we go with LC3, we can't afford any slip in the excavation phase." },
+    { role: "Sustainability Lead", name: "Elena Rodriguez", time: "15 mins ago", text: "Just a reminder: LC3 gets us 30% closer to the overall carbon target on its own. Let's try to make the schedule work if possible." }
+  ],
+  Structure: [
+    { role: "Architect", name: "David Kim", time: "1 day ago", text: "Mass timber hybrid frame aligns perfectly with the visual language we want for the atrium. I strongly support option 1." },
+    { role: "Civil Engineer", name: "Sarah Chen", time: "4 hours ago", text: "I've reviewed the preliminary loads. We'll need to beef up the connections if we use the hybrid frame, which might eat into the cost savings." },
+    { role: "Procurement", name: "James Wilson", time: "Just now", text: "Lead times for the mass timber from our primary supplier are currently at 14 weeks. Please factor that into the timeline." }
+  ],
+  HVAC: [
+    { role: "Mechanical Engineer", name: "Priya Patel", time: "3 hours ago", text: "The VRF air-source heat pump is the right call for this climate zone. We can downsize the units if the envelope improvements get approved." },
+    { role: "Architect", name: "David Kim", time: "2 hours ago", text: "If we downsize the units, does that mean we can reduce the mechanical penthouse footprint? That would free up roof space for more solar." },
+    { role: "Mechanical Engineer", name: "Priya Patel", time: "10 mins ago", text: "@David Kim Yes, potentially by about 15%. Let's sync on the updated spatial requirements tomorrow." }
+  ],
+  default: [
+    { role: "Project Manager", name: "Marcus Johnson", time: "5 hours ago", text: "Can everyone review these alternatives by EOD Friday? We need to lock in the material orders soon." },
+    { role: "Sustainability Lead", name: "Elena Rodriguez", time: "2 hours ago", text: "Reviewed. The top-ranked option here aligns perfectly with our LEED certification targets." }
+  ]
+};
+
 function bestAlternatives(result, userSelections = {}) {
   return result.components.map((component) => {
     const selectedAltName = userSelections[component.component] || component.alternatives[0].name;
@@ -234,7 +256,7 @@ export function ResultsDashboard({
                   ))}
                 </div>
 
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end pt-4 mb-8">
                   <button
                     onClick={handleProceed}
                     className="flex items-center gap-3 bg-accent text-bg hover:bg-white hover:scale-[1.02] transition-all px-8 py-4 rounded-full font-bold uppercase tracking-widest text-sm shadow-glow"
@@ -244,6 +266,57 @@ export function ResultsDashboard({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                     </svg>
                   </button>
+                </div>
+
+                {/* Team Collaboration Prototype */}
+                <div className="rounded-[40px] glass p-10 mt-8 mb-8 border border-white/5 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent/20 via-accent/60 to-accent/20" />
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/30 mb-2">Cross-Discipline Check</p>
+                      <h4 className="font-heading text-2xl text-white">Team Brainstorming</h4>
+                    </div>
+                    <span className="rounded-full bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/40 border border-white/10">
+                      Prototype Mode
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {(MOCK_TEAM_COMMENTS[selected.component] || MOCK_TEAM_COMMENTS.default).map((comment, i) => (
+                      <div key={i} className="flex gap-4">
+                        <div className="shrink-0 h-10 w-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center font-heading text-accent text-lg">
+                          {comment.name.charAt(0)}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-baseline gap-3">
+                            <span className="font-bold text-white text-sm">{comment.name}</span>
+                            <span className="text-[10px] uppercase tracking-wider text-accent font-bold">{comment.role}</span>
+                            <span className="text-xs text-white/30">{comment.time}</span>
+                          </div>
+                          <p className="text-sm text-white/60 leading-relaxed bg-white/5 rounded-2xl rounded-tl-none p-4 border border-white/5">
+                            {comment.text}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-8 flex gap-4">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center font-heading text-white/40 text-lg">
+                      U
+                    </div>
+                    <div className="flex-1 relative">
+                      <input 
+                        type="text" 
+                        placeholder="Add your design input..." 
+                        className="w-full bg-white/5 border border-white/10 rounded-full px-6 py-3 text-sm text-white outline-none focus:border-accent transition-all placeholder:text-white/20"
+                        readOnly
+                      />
+                      <button className="absolute right-2 top-1.5 bottom-1.5 px-4 rounded-full bg-white/10 text-[10px] font-bold uppercase tracking-widest text-white/50 hover:bg-white/20 hover:text-white transition-all cursor-not-allowed">
+                        Post
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Portfolio Context */}
