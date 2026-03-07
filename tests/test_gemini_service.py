@@ -13,6 +13,7 @@ def test_merge_explanations_preserves_catalog_materials_and_metrics() -> None:
                 "baseline": "CMU",
                 "climate_note": "Catalog note",
                 "recommendation_summary": "Catalog recommendation",
+                "filtered_catalog_materials": ["Fly Ash Brick", "AAC Block", "Brick"],
                 "alternatives": [
                     {
                         "name": "Fly Ash Brick",
@@ -54,7 +55,7 @@ def test_merge_explanations_preserves_catalog_materials_and_metrics() -> None:
                 "climate_note": "Gemini climate note",
                 "recommendation_summary": "Gemini recommendation",
                 "alternatives": [
-                    {"summary": "Gemini summary", "rationale": "Gemini rationale"},
+                    {"name": "Invented Wall Panel", "summary": "Gemini summary", "rationale": "Gemini rationale", "carbon_reduction_pct": 99},
                     {"summary": "Gemini summary 2", "rationale": "Gemini rationale 2"},
                     {"summary": "Gemini summary 3", "rationale": "Gemini rationale 3"},
                 ],
@@ -69,3 +70,4 @@ def test_merge_explanations_preserves_catalog_materials_and_metrics() -> None:
     assert top["carbon_reduction_pct"] == 30.0
     assert top["summary"] == "Gemini summary"
     assert merged["components"][0]["baseline"] == "CMU"
+    assert merged["components"][0]["filtered_catalog_materials"] == ["Fly Ash Brick", "AAC Block", "Brick"]

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MaterialsAdminPanel } from "./MaterialsAdminPanel";
+import { SeasonalClimateCard } from "./SeasonalClimateCard";
 
 const baseCertifications = [
   "LEED",
@@ -120,18 +121,7 @@ export function MultiStepForm({
                 <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               </button>
               {climatePreview && (
-                <div className="rounded-3xl border border-accent/20 bg-accent/5 p-6 animate-reveal">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-heading text-xl text-white">{climatePreview.location_label}</p>
-                    <span className="text-[8px] font-black uppercase tracking-widest text-accent/40">{climatePreview.source}</span>
-                  </div>
-                  <p className="text-white/50 leading-relaxed font-medium">
-                    {climatePreview.temp_min}°C – {climatePreview.temp_max}°C Daily Range
-                  </p>
-                  <p className="mt-1 text-white/30 text-[10px] font-medium">
-                    {climatePreview.humidity_pct}% Humidity • {climatePreview.wind_speed_kph} km/h Wind
-                  </p>
-                </div>
+                <SeasonalClimateCard climate={climatePreview} className="animate-reveal" compact />
               )}
             </div>
           </div>

@@ -4,6 +4,97 @@ from app.models import COMPONENTS
 from app.services.material_catalog import MaterialCatalogService, MaterialRecord
 
 
+MATERIAL_KNOWLEDGE_BASE = {
+    "moisture_resistant": {
+        "aac",
+        "aluminum",
+        "bituminous",
+        "brick",
+        "cmu",
+        "concrete",
+        "cool roof",
+        "dx cooling",
+        "fiberglass",
+        "gypsum",
+        "heat pump",
+        "lime plaster",
+        "low-voc",
+        "membrane",
+        "metal",
+        "mineral wool",
+        "precast",
+        "recycled steel",
+        "rubber",
+        "steel",
+        "vinyl",
+        "vrf",
+    },
+    "heat_resistant": {
+        "aac",
+        "air-source heat pump",
+        "aluminum",
+        "concrete",
+        "cool roof",
+        "erv",
+        "fiberglass",
+        "ground-source heat pump",
+        "heat pump",
+        "low-e",
+        "metal",
+        "mineral wool",
+        "precast",
+        "standing seam",
+        "timber-aluminum",
+        "vacuum insulated glazing",
+        "vrf",
+    },
+    "cold_resistant": {
+        "cellulose",
+        "composite",
+        "doas",
+        "door set",
+        "erv",
+        "fiberglass",
+        "ground-source heat pump",
+        "insulated",
+        "low-e",
+        "mineral wool",
+        "thermally broken",
+        "timber",
+        "triple-glazed",
+        "vacuum insulated glazing",
+        "wood fiber",
+    },
+    "wind_resistant": {
+        "aluminum",
+        "cmu",
+        "concrete",
+        "fiberglass",
+        "frame",
+        "metal",
+        "precast",
+        "standing seam",
+        "steel",
+    },
+    "moisture_sensitive": {
+        "bamboo",
+        "bio-based",
+        "cellulose",
+        "clt",
+        "hemp",
+        "mass timber",
+        "timber",
+        "wood fiber",
+    },
+}
+
+SEASON_WEIGHTS = {
+    "summer": 0.35,
+    "monsoon": 0.40,
+    "winter": 0.25,
+}
+
+
 def _clamp(value: float, lower: float, upper: float) -> float:
     return max(lower, min(upper, value))
 
@@ -16,10 +107,11 @@ class AnalysisService:
         components = []
         for component in COMPONENTS:
             baseline = self.catalog_service.get_baseline_material(component, payload["location"])
-            ranked_rows = self.catalog_service.get_ranked_materials(component, payload["location"])[:3]
+            ranked_rows = self._filtered_ranked_materials(component, payload["location"], climate)[:3]
             if len(ranked_rows) < 3:
                 raise ValueError(f"Component '{component}' has fewer than 3 ranked candidates")
             candidate_rows = self.catalog_service.get_materials_by_component(component)
+            filtered_names = [row.material for row in ranked_rows]
 
             alternatives = [
                 self._to_alternative(component, baseline, row, candidate_rows, climate, rank=index + 1, is_default_db=is_default_db)
@@ -31,6 +123,7 @@ class AnalysisService:
                     "baseline": baseline.material,
                     "climate_note": self._climate_note(component, climate, alternatives[0]["name"], is_default_db),
                     "recommendation_summary": self._component_summary(component, payload, alternatives[0]["name"], is_default_db),
+                    "filtered_catalog_materials": filtered_names,
                     "alternatives": alternatives,
                 }
             )
@@ -55,6 +148,30 @@ class AnalysisService:
                 ),
             },
         }
+
+    def _filtered_ranked_materials(self, component: str, region: str, climate: dict[str, Any]) -> list[MaterialRecord]:
+        ranked_rows = self.catalog_service.get_ranked_materials(component, region)
+        viable_rows = [row for row in ranked_rows if self._passes_material_filter(component, row, climate)]
+        if len(viable_rows) >= 3:
+            return viable_rows
+
+        fallback_rows = [row for row in ranked_rows if row not in viable_rows]
+        fallback_rows.sort(
+            key=lambda row: (
+                self._climate_fit_score(row, climate),
+                row.sustainability,
+                row.availability,
+            ),
+            reverse=True,
+        )
+        return viable_rows + fallback_rows
+
+    def _passes_material_filter(self, component: str, row: MaterialRecord, climate: dict[str, Any]) -> bool:
+        if row.baseline:
+            return False
+        climate_fit = self._climate_fit_score(row, climate)
+        seasonal_fit = self._seasonal_fit_score(component, row, climate)
+        return row.sustainability >= 65 and climate_fit >= 55 and seasonal_fit >= 55
 
     def _to_alternative(
         self,
@@ -104,12 +221,14 @@ class AnalysisService:
         availability_score = self._normalize_forward(row.availability, availability_values)
         sustainability_score = self._normalize_forward(row.sustainability, sustainability_values)
         climate_fit = self._climate_fit_score(row, climate)
+        seasonal_fit = self._seasonal_fit_score(component, row, climate)
         return _clamp(
             0.30 * carbon_score
             + 0.20 * cost_score
             + 0.20 * availability_score
             + 0.20 * sustainability_score
-            + 0.10 * climate_fit,
+            + 0.05 * climate_fit
+            + 0.05 * seasonal_fit,
             0,
             100,
         )
@@ -128,7 +247,64 @@ class AnalysisService:
             base += 10
         if wind >= 20 and row.availability >= 75:
             base += 5
+        base += (self._seasonal_fit_score(row.component, row, climate) - 50.0) * 0.2
         return _clamp(base, 0, 100)
+
+    def _seasonal_fit_score(self, component: str, row: MaterialRecord, climate: dict[str, Any]) -> float:
+        seasonal_profile = climate.get("seasonal_profile") or {}
+        if not isinstance(seasonal_profile, dict) or not seasonal_profile:
+            return 50.0
+
+        name = row.material.lower()
+        scores: list[float] = []
+        for season_name, weight in SEASON_WEIGHTS.items():
+            season = seasonal_profile.get(season_name) or {}
+            if not isinstance(season, dict):
+                continue
+            score = 50.0
+            risk_tags = set(season.get("risk_tags") or [])
+
+            if "heat" in risk_tags:
+                score += self._keyword_bonus(name, MATERIAL_KNOWLEDGE_BASE["heat_resistant"], 16)
+            if "cold" in risk_tags:
+                score += self._keyword_bonus(name, MATERIAL_KNOWLEDGE_BASE["cold_resistant"], 16)
+            if "wind" in risk_tags:
+                score += self._keyword_bonus(name, MATERIAL_KNOWLEDGE_BASE["wind_resistant"], 12)
+            if "humidity" in risk_tags or "rain" in risk_tags:
+                score += self._keyword_bonus(name, MATERIAL_KNOWLEDGE_BASE["moisture_resistant"], 18)
+                score -= self._keyword_bonus(name, MATERIAL_KNOWLEDGE_BASE["moisture_sensitive"], 22)
+
+            score += self._component_specific_adjustment(component, name, risk_tags)
+            scores.append(score * weight)
+
+        if not scores:
+            return 50.0
+        return _clamp(sum(scores) / sum(SEASON_WEIGHTS.values()), 0, 100)
+
+    @staticmethod
+    def _keyword_bonus(name: str, keywords: set[str], weight: float) -> float:
+        return max((weight for keyword in keywords if keyword in name), default=0.0)
+
+    def _component_specific_adjustment(self, component: str, material_name: str, risk_tags: set[str]) -> float:
+        if component in {"Roof", "Walls", "Windows", "Doors"} and ("rain" in risk_tags or "wind" in risk_tags):
+            if any(token in material_name for token in ("membrane", "metal", "fiberglass", "aac", "steel")):
+                return 8.0
+        if component == "Insulation" and "humidity" in risk_tags:
+            if "mineral wool" in material_name or "fiberglass" in material_name:
+                return 10.0
+            if "cellulose" in material_name or "wood fiber" in material_name:
+                return -10.0
+        if component in {"Flooring", "Interior Finishes"} and ("humidity" in risk_tags or "rain" in risk_tags):
+            if any(token in material_name for token in ("concrete", "rubber", "lime plaster", "gypsum", "low-voc")):
+                return 8.0
+            if "bamboo" in material_name or "bio-based" in material_name:
+                return -8.0
+        if component == "HVAC":
+            if "heat" in risk_tags and "heat pump" in material_name:
+                return 10.0
+            if "cold" in risk_tags and "ground-source heat pump" in material_name:
+                return 10.0
+        return 0.0
 
     @staticmethod
     def _normalize_inverse(value: float, values: list[float]) -> float:
@@ -172,36 +348,49 @@ class AnalysisService:
         )
 
     def _climate_note(self, component: str, climate: dict[str, Any], material_name: str, is_default_db: bool) -> str:
+        seasonal_profile = climate.get("seasonal_profile") or {}
+        summer = seasonal_profile.get("summer", {})
+        monsoon = seasonal_profile.get("monsoon", {})
+        winter = seasonal_profile.get("winter", {})
+        base_temperature = climate.get("temperature_c", 24)
+        base_humidity = climate.get("humidity_pct", 50)
+        base_precipitation = climate.get("precipitation_mm", 0)
         if is_default_db:
-             return f"{component} was evaluated against {climate['temperature_c']}C temperature, {climate['humidity_pct']}% humidity, and {climate['wind_speed_kph']} kph wind. Sustainable options must withstand these conditions."
+             return (
+                 f"{component} was evaluated against summer {summer.get('temperature_c', base_temperature)}C, "
+                 f"monsoon rain {monsoon.get('precipitation_mm', base_precipitation)} mm, and winter "
+                 f"{winter.get('temperature_c', base_temperature)}C conditions."
+             )
         return (
-            f"{component} was evaluated against {climate['temperature_c']}C temperature, "
-            f"{climate['humidity_pct']}% humidity, and {climate['wind_speed_kph']} kph wind. "
-            f"{material_name} remained the best catalog-backed option."
+            f"{component} was evaluated against summer {summer.get('temperature_c', base_temperature)}C heat, "
+            f"monsoon humidity {monsoon.get('humidity_pct', base_humidity)}% with "
+            f"{monsoon.get('precipitation_mm', base_precipitation)} mm rain, and winter "
+            f"{winter.get('temperature_c', base_temperature)}C conditions. {material_name} remained the best catalog-backed option."
         )
 
     def _alternative_summary(self, component: str, material_name: str, rank: int, is_default_db: bool) -> str:
         if is_default_db:
-            return f"Rank {rank} for {component.lower()}: Awaiting AI recommendation."
+            return f"Rank {rank} for {component.lower()}: {material_name} from the catalog after seasonal climate filtering."
         return f"Rank {rank} for {component.lower()}: {material_name} based strictly on the uploaded catalog values."
 
     def _rationale(self, component: str, row: MaterialRecord, climate: dict[str, Any], is_default_db: bool) -> str:
+        seasonal_fit = round(self._seasonal_fit_score(component, row, climate), 1)
         if is_default_db:
-            return f"Industry standard evaluation for {climate['location_label']}."
+            return f"Catalog material screened against seasonal climate risks for {climate['location_label']} with seasonal fit {seasonal_fit}."
         return (
             f"Selected for {component.lower()} because the CSV shows carbon {row.carbon}, cost {row.cost}, "
-            f"availability {row.availability}, and sustainability {row.sustainability} for {climate['location_label']}."
+            f"availability {row.availability}, sustainability {row.sustainability}, and seasonal fit {seasonal_fit} for {climate['location_label']}."
         )
 
     def _implementation_notes(self, payload: dict[str, Any], is_default_db: bool) -> list[str]:
         if is_default_db:
             return [
-                "Engage local suppliers early to verify availability of specialized sustainable materials.",
-                 f"Adjust the timeline based on regional climatic impacts in {payload['location']}.",
-                 "Evaluate all suggested alternatives against local building codes before procurement."
+                "Engage local suppliers early to verify the filtered catalog materials can meet seasonal demand peaks.",
+                 f"Adjust the timeline based on summer, monsoon, and winter logistics impacts in {payload['location']}.",
+                 "Evaluate the shortlisted catalog alternatives against local building codes before procurement."
             ]
         return [
-            "Keep the materials CSV under change control because it is the system of record for all recommendations.",
-            f"Re-upload the catalog before re-analysis if supplier pricing changes for {payload['location']}.",
-            "Validate procurement and code compliance on the top-ranked catalog options before issuing design decisions.",
+            "Keep the materials CSV under change control because it is the system of record for the filtered shortlist and final recommendations.",
+            f"Re-upload the catalog before re-analysis if supplier pricing or seasonal availability changes for {payload['location']}.",
+            "Validate procurement and code compliance on the season-aware shortlisted catalog options before issuing design decisions.",
         ]

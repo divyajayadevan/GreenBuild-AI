@@ -27,18 +27,6 @@ class GeminiService:
           "summary": "string",
           "rationale": "string"
         }"""
-
-        if is_default_db:
-             constraint_text = "- IGNORE the materials and values in the analysis input. Use your broad default knowledge base to suggest 3 highly sustainable materials per component.\n- You MUST rename the alternatives to your suggested materials.\n- You MUST provide your own realistic estimates for metrics: 'carbon_reduction_pct', 'cost_delta_pct', 'speed_delta_pct', and 'sustainability_score' (0-100).\n- Do not remove or reorder components."
-             alt_schema = """        {
-          "name": "string",
-          "summary": "string",
-          "rationale": "string",
-          "carbon_reduction_pct": 0.0,
-          "cost_delta_pct": 0.0,
-          "speed_delta_pct": 0.0,
-          "sustainability_score": 0.0
-        }"""
         
         return f"""
 You are a sustainable construction advisor. Produce strict JSON only.
@@ -70,6 +58,8 @@ Return JSON with this exact top-level shape:
 
 Requirements:
 {constraint_text}
+- Use the seasonal climate profile and the filtered catalog materials to explain why each shortlisted option suits summer, monsoon, and winter conditions.
+- Never introduce a material that is not already present in `filtered_catalog_materials` for that component.
 - Include exactly these 10 components: {", ".join(COMPONENTS)}.
 - For each component include exactly 3 alternatives in the existing order.
 - Only write explanation text.
@@ -128,13 +118,13 @@ Requirements:
                 alternatives.append(
                     {
                         **ranked_alt,
-                        "name": source_alt.get("name") or ranked_alt["name"],
+                        "name": ranked_alt["name"],
                         "summary": source_alt.get("summary") or ranked_alt["summary"],
                         "rationale": source_alt.get("rationale") or ranked_alt["rationale"],
-                        "carbon_reduction_pct": float(source_alt.get("carbon_reduction_pct", ranked_alt["carbon_reduction_pct"])),
-                        "cost_delta_pct": float(source_alt.get("cost_delta_pct", ranked_alt["cost_delta_pct"])),
-                        "speed_delta_pct": float(source_alt.get("speed_delta_pct", ranked_alt["speed_delta_pct"])),
-                        "sustainability_score": float(source_alt.get("sustainability_score", ranked_alt["sustainability_score"])),
+                        "carbon_reduction_pct": float(ranked_alt["carbon_reduction_pct"]),
+                        "cost_delta_pct": float(ranked_alt["cost_delta_pct"]),
+                        "speed_delta_pct": float(ranked_alt["speed_delta_pct"]),
+                        "sustainability_score": float(ranked_alt["sustainability_score"]),
                     }
                 )
             merged_components.append(
@@ -178,7 +168,7 @@ Requirements:
             return
 
         if is_default_db:
-            behavior = "You may use your extensive knowledge base to provide general sustainable building advice."
+            behavior = "Answer using only the stored catalog-backed result and do not invent new materials."
         else:
             behavior = "Answer the follow-up question using the stored project result."
 

@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { api } from "../lib/api";
+import { SeasonalClimateCard, seasonalClimateInsights } from "./SeasonalClimateCard";
 
 const MOCK_TEAM_COMMENTS = {
   Foundation: [
@@ -350,19 +351,23 @@ export function ResultsDashboard({
 
             {activeTab === "climate" && (
               <div className="grid gap-8 lg:grid-cols-2">
-                <div className="rounded-[40px] glass p-10 space-y-10">
-                  <h3 className="font-heading text-3xl text-white tracking-tight">Environmental Context</h3>
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <ClimateItem label="Temperature" value={`${result.climate.temperature_c}°C`} />
-                    <ClimateItem label="Humidity" value={`${result.climate.humidity_pct}%`} />
-                    <ClimateItem label="Wind Velocity" value={`${result.climate.wind_speed_kph} kph`} />
-                    <ClimateItem label="Moisture" value={`${result.climate.precipitation_mm} mm`} />
+                {result.climate?.seasonal_profile ? (
+                  <SeasonalClimateCard climate={result.climate} className="glass" />
+                ) : (
+                  <div className="rounded-[40px] glass p-10 space-y-10">
+                    <h3 className="font-heading text-3xl text-white tracking-tight">Environmental Context</h3>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <ClimateItem label="Temperature" value={`${result.climate.temperature_c}°C`} />
+                      <ClimateItem label="Humidity" value={`${result.climate.humidity_pct}%`} />
+                      <ClimateItem label="Wind Velocity" value={`${result.climate.wind_speed_kph} kph`} />
+                      <ClimateItem label="Moisture" value={`${result.climate.precipitation_mm} mm`} />
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="rounded-[40px] glass p-10">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-8">Adaptive Logic</p>
                   <div className="space-y-6">
-                    {result.climate.next_days_summary.map((day, i) => (
+                    {seasonalClimateInsights(result.climate).map((day, i) => (
                       <div key={i} className="flex items-center gap-6 group">
                         <div className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 text-[10px] font-black text-white/20 group-hover:text-accent transition-colors">0{i + 1}</div>
                         <p className="text-white/60 font-medium">{day}</p>
@@ -469,4 +474,3 @@ function DownloadIcon(props) {
     </svg>
   );
 }
-

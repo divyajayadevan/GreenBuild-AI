@@ -64,10 +64,16 @@ class ClimateSnapshot(BaseModel):
     latitude: float
     longitude: float
     temperature_c: float
+    temp_max: float | None = None
+    temp_min: float | None = None
     wind_speed_kph: float
     precipitation_mm: float
     humidity_pct: float
     next_days_summary: list[str]
+    source: str | None = None
+    basis: str | None = None
+    seasonal_profile: dict = Field(default_factory=dict)
+    climate_risks: list[str] = Field(default_factory=list)
 
 
 class AnalysisResult(BaseModel):
@@ -94,4 +100,3 @@ class JobStatus(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=2, max_length=1000)
-
