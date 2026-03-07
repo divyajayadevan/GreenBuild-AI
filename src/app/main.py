@@ -117,7 +117,7 @@ def chat(slug: str, payload: ChatRequest) -> StreamingResponse:
 
     storage.append_chat_message(slug, "user", payload.message)
 
-    def stream() -> str:
+    def stream() -> str: # type: ignore
         chunks = []
         for chunk in gemini_service.stream_chat(result, payload.message):
             chunks.append(chunk)
