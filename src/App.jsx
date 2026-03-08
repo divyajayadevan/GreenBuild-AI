@@ -114,33 +114,22 @@ function LandingPage() {
         </a>
       </header>
 
-      <section className="grid gap-16 py-20 xl:grid-cols-[1.1fr,0.9fr] xl:items-center">
+      <section className="py-20 flex flex-col items-center text-center xl:items-start xl:text-left">
         <div className="animate-reveal">
           <div className="inline-flex rounded-full border border-accent/20 bg-accent/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.4em] text-accent">
             Gemini 2.5 Flash + Climate Engine
           </div>
-          <h1 className="mt-8 max-w-4xl font-heading text-7xl leading-[1.05] text-white md:text-9xl tracking-tighter uppercase">
-            GreenBuild <span className="text-accent">AI</span>
-          </h1>
-          <p className="mt-10 max-w-2xl text-xl leading-relaxed text-white/50">
+          <div className="mt-8 flex flex-col md:flex-row items-center gap-6 overflow-hidden py-4">
+            <div className="flex-shrink-0 animate-slide-in relative flex items-center justify-center h-20 w-20 md:h-28 md:w-28 rounded-[24px] md:rounded-[36px] bg-accent shadow-[0_0_40px_rgba(34,197,94,0.3)]">
+              <span className="font-heading text-6xl md:text-8xl font-black text-[#1A1A1A] tracking-tighter" style={{ fontFamily: 'Sora, sans-serif' }}>S</span>
+            </div>
+            <h1 className="animate-fade-in-text font-heading text-5xl leading-[1.05] text-white md:text-7xl lg:text-[5rem] tracking-tighter uppercase whitespace-normal md:whitespace-nowrap">
+              SAGE <span className="text-accent">ALTERNATIVES</span>
+            </h1>
+          </div>
+          <p className="mt-8 max-w-2xl text-xl leading-relaxed text-white/50">
             High-performance material options, carbon impact tracking, and delivery implications in seconds.
           </p>
-        </div>
-
-        <div className="relative animate-reveal animation-delay-200">
-          <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-accent/10 blur-[120px]" />
-          <div className="absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-emerald-500/10 blur-[120px]" />
-          <div className="relative aspect-square flex items-center justify-center rounded-[48px] glass p-16 shadow-glow transition-all hover:scale-[1.02]">
-            <div className="relative flex items-center justify-center">
-              <div className="absolute h-32 w-32 rounded-full bg-accent/20 blur-2xl animate-pulse" />
-              <div className="relative h-24 w-24 rounded-3xl bg-accent flex items-center justify-center font-heading text-5xl font-bold text-bg shadow-2xl">
-                G
-              </div>
-              <div className="absolute -bottom-12 text-[10px] font-black uppercase tracking-[0.5em] text-white/20 whitespace-nowrap">
-                Project Brand Space
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
